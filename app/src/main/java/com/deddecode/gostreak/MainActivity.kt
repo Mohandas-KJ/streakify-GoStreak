@@ -12,9 +12,14 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.deddecode.gostreak.components.GoStreakTopBar
+import com.deddecode.gostreak.components.showFAB
 import com.deddecode.gostreak.ui.theme.GoStreakTheme
 
 class MainActivity : ComponentActivity() {
@@ -32,5 +37,17 @@ class MainActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(){
-    GoStreakTopBar("Go Streak")
+
+    var showAddStreakDialog by remember { mutableStateOf(false) }
+
+    Scaffold(
+        topBar = {GoStreakTopBar("Go Streak")},
+        floatingActionButton = {
+            showFAB {
+                showAddStreakDialog = true
+            }
+        }
+    ) { paddingValues ->
+            // Lines
+    }
 }
