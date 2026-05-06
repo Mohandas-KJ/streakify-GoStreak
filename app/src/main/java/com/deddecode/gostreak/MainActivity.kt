@@ -1,53 +1,196 @@
 package com.deddecode.gostreak
 
-import android.R
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import com.deddecode.gostreak.components.GoStreakTopBar
-import com.deddecode.gostreak.components.showFAB
-import com.deddecode.gostreak.ui.theme.GoStreakTheme
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 class MainActivity : ComponentActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+
         setContent {
-            GoStreakTheme {
-                MainScreen()
+            Surface(
+                modifier = Modifier.fillMaxSize(),
+                color = Color(0xFF0F0F0F)
+            ) {
+                ZenStackApp()
             }
         }
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainScreen(){
+fun ZenStackApp(zenViewModel: ZenViewModel = viewModel()) {
 
-    var showAddStreakDialog by remember { mutableStateOf(false) }
+    val blocks = zenViewModel.blocks
+
+    val streak by zenViewModel.streak
 
     Scaffold(
-        topBar = {GoStreakTopBar("Go Streak")},
+        containerColor = Color.Transparent,
+
         floatingActionButton = {
-            showFAB {
-                showAddStreakDialog = true
+
+            FloatingActionButton(
+                onClick = {
+                    zenViewModel.addFocusBlock()
+                },
+                containerColor = Color(0xFFBB86FC)
+            ) {
+
+                Icon(
+                    Icons.Default.Add,
+                    contentDescription = "Add",
+                    tint = Color.Black
+                )
             }
         }
-    ) { paddingValues ->
-            // Lines
+
+    ) { padding ->
+
+        Column(
+            modifier = Modifier
+                .padding(padding)
+                .fillMaxSize()
+                .padding(20.dp)
+        ) {
+
+            Text(
+                "GO STREAK",
+                fontSize = 12.sp,
+                letterSpacing = 4.sp,
+                color = Color.Gray
+            )
+
+            Text(
+                text = "Current Streak: 🔥 $streak",
+                fontSize = 32.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White
+            )
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = Color(0xFF252525)
+                )
+            ) {
+
+                Column(
+                    modifier = Modifier.padding(16.dp)
+                ) {
+
+                    val currentMinutes = zenViewModel.sliderPosition.floatValue.toInt()
+
+                    Text(
+                        text = "Next Session: $currentMinutes mins",
+                        color = Color(0xFFBB86FC),
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp
+                    )
+
+                    Slider(
+                        value = zenViewModel.sliderPosition.floatValue,
+
+                        onValueChange = {
+
+                            // Snap to nearest 5
+                            zenViewModel.sliderPosition.floatValue =
+                                (it / 5).toInt() * 5f
+                        },
+
+                        valueRange = 5f..120f,
+
+                        steps = 22,
+
+                        colors = SliderDefaults.colors(
+                            thumbColor = Color(0xFFBB86FC),
+                            activeTrackColor = Color(0xFFBB86FC)
+                        )
+                    )
+
+                    Text(
+                        text = "5 min → 120 min",
+                        color = Color.Gray,
+                        fontSize = 12.sp
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+
+                items(blocks) { block ->
+                    FocusCard(block)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun FocusCard(block: FocusBlock) {
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+
+        colors = CardDefaults.cardColors(
+            containerColor = Color(0xFF1E1E1E)
+        ),
+
+        shape = RoundedCornerShape(16.dp)
+    ) {
+
+        Row(
+            modifier = Modifier.padding(20.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+
+                Text(
+                    text = "Block ${block.blockNumber}",
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold
+                )
+
+                Text(
+                    text = block.timeLabel,
+                    color = Color.Gray,
+                    fontSize = 14.sp
+                )
+            }
+
+            Text(
+                text = "COMPLETED",
+                color = Color(0xFF03DAC5),
+                fontSize = 10.sp,
+                fontWeight = FontWeight.Bold
+            )
+        }
     }
 }
