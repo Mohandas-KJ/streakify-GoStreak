@@ -1,28 +1,36 @@
 package com.deddecode.gostreak
 
 import android.os.Bundle
-import androidx.fragment.app.FragmentActivity
-import androidx.activity.compose.setContent
+import android.widget.Toast
+import androidx.biometric.BiometricPrompt
+import androidx.compose.animation.core.*
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.activity.compose.setContent
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
-import androidx.compose.material.icons.filled.Delete
-import android.widget.Toast
+import androidx.fragment.app.FragmentActivity
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 class MainActivity : FragmentActivity() {
 
@@ -30,12 +38,7 @@ class MainActivity : FragmentActivity() {
         super.onCreate(savedInstanceState)
 
         setContent {
-            Surface(
-                modifier = Modifier.fillMaxSize(),
-                color = Color(0xFF0F0F0F)
-            ) {
-                ZenStackApp()
-            }
+            ZenStackApp()
         }
     }
 }
@@ -47,7 +50,8 @@ fun ZenStackApp(zenViewModel: ZenViewModel = viewModel()) {
 
     val streak by zenViewModel.streak
 
-    val activity = androidx.compose.ui.platform.LocalContext.current as FragmentActivity
+    val activity =
+        androidx.compose.ui.platform.LocalContext.current as FragmentActivity
 
     val executor = ContextCompat.getMainExecutor(activity)
 
@@ -67,7 +71,7 @@ fun ZenStackApp(zenViewModel: ZenViewModel = viewModel()) {
 
                 Toast.makeText(
                     activity,
-                    "All Blocks Cleared",
+                    "All Blocks Cleared 🔥",
                     Toast.LENGTH_SHORT
                 ).show()
             }
@@ -76,140 +80,252 @@ fun ZenStackApp(zenViewModel: ZenViewModel = viewModel()) {
 
     val promptInfo = BiometricPrompt.PromptInfo.Builder()
         .setTitle("Fingerprint Required")
-        .setSubtitle("Authenticate to clear all streaks")
+        .setSubtitle("Authenticate to clear streak")
         .setNegativeButtonText("Cancel")
         .build()
 
-    Scaffold(
-        containerColor = Color.Transparent,
+    // FAB Pulse Animation
+    val infiniteTransition = rememberInfiniteTransition(label = "")
 
-        floatingActionButton = {
+    val fabScale by infiniteTransition.animateFloat(
+        initialValue = 1f,
+        targetValue = 1.08f,
 
-            Column(
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
+        animationSpec = infiniteRepeatable(
+            animation = tween(900),
+            repeatMode = RepeatMode.Reverse
+        ),
 
-                // CLEAR BUTTON
-                FloatingActionButton(
+        label = ""
+    )
 
-                    onClick = {
-
-                        biometricPrompt.authenticate(promptInfo)
-
-                    },
-
-                    containerColor = Color(0xFFFF5252)
-
-                ) {
-
-                    Icon(
-                        Icons.Default.Delete,
-                        contentDescription = "Clear",
-                        tint = Color.White
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        Color(0xFF0F2027),
+                        Color(0xFF203A43),
+                        Color(0xFF2C5364)
                     )
-                }
-
-                // ADD BUTTON
-                FloatingActionButton(
-
-                    onClick = {
-                        zenViewModel.addFocusBlock()
-                    },
-
-                    containerColor = Color(0xFFBB86FC)
-
-                ) {
-
-                    Icon(
-                        Icons.Default.Add,
-                        contentDescription = "Add",
-                        tint = Color.Black
-                    )
-                }
-            }
-        }
-
-    ) { padding ->
-
-        Column(
-            modifier = Modifier
-                .padding(padding)
-                .fillMaxSize()
-                .padding(20.dp)
-        ) {
-
-            Text(
-                "GO STREAK",
-                fontSize = 12.sp,
-                letterSpacing = 4.sp,
-                color = Color.Gray
-            )
-
-            Text(
-                text = "Current Streak: 🔥 $streak",
-                fontSize = 32.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.White
-            )
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = Color(0xFF252525)
                 )
-            ) {
+            )
+    ) {
+
+        Scaffold(
+            containerColor = Color.Transparent,
+
+            floatingActionButton = {
 
                 Column(
-                    modifier = Modifier.padding(16.dp)
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
 
-                    val currentMinutes = zenViewModel.sliderPosition.floatValue.toInt()
-
-                    Text(
-                        text = "Next Session: $currentMinutes mins",
-                        color = Color(0xFFBB86FC),
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp
-                    )
-
-                    Slider(
-                        value = zenViewModel.sliderPosition.floatValue,
-
-                        onValueChange = {
-
-                            // Snap to nearest 5
-                            zenViewModel.sliderPosition.floatValue =
-                                (it / 5).toInt() * 5f
+                    // CLEAR FAB
+                    FloatingActionButton(
+                        onClick = {
+                            biometricPrompt.authenticate(promptInfo)
                         },
 
-                        valueRange = 5f..120f,
+                        containerColor = Color(0xFFFF5252),
 
-                        steps = 22,
+                        modifier = Modifier
+                            .scale(fabScale)
+                            .shadow(16.dp, CircleShape)
+                    ) {
 
-                        colors = SliderDefaults.colors(
-                            thumbColor = Color(0xFFBB86FC),
-                            activeTrackColor = Color(0xFFBB86FC)
+                        Icon(
+                            Icons.Default.Delete,
+                            contentDescription = "Delete",
+                            tint = Color.White
                         )
-                    )
+                    }
 
-                    Text(
-                        text = "5 min → 120 min",
-                        color = Color.Gray,
-                        fontSize = 12.sp
-                    )
+                    // ADD FAB
+                    FloatingActionButton(
+                        onClick = {
+                            zenViewModel.addFocusBlock()
+                        },
+
+                        containerColor = Color(0xFFBB86FC),
+
+                        modifier = Modifier
+                            .scale(fabScale)
+                            .shadow(16.dp, CircleShape)
+                    ) {
+
+                        Icon(
+                            Icons.Default.Add,
+                            contentDescription = "Add",
+                            tint = Color.Black
+                        )
+                    }
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+        ) { padding ->
 
-            LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+            Column(
+                modifier = Modifier
+                    .padding(padding)
+                    .fillMaxSize()
+                    .padding(20.dp)
             ) {
 
-                items(blocks) { block ->
-                    FocusCard(block)
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = "GO STREAK",
+                    color = Color.White.copy(alpha = 0.7f),
+                    fontSize = 14.sp,
+                    letterSpacing = 5.sp
+                )
+
+                Spacer(modifier = Modifier.height(18.dp))
+
+                // STREAK CARD
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .shadow(
+                            elevation = 24.dp,
+                            shape = RoundedCornerShape(28.dp)
+                        ),
+
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color(0xFF1F2937)
+                    ),
+
+                    shape = RoundedCornerShape(28.dp)
+                ) {
+
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(28.dp)
+                    ) {
+
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+
+                            Icon(
+                                Icons.Default.LocalFireDepartment,
+                                contentDescription = null,
+                                tint = Color(0xFFFF9800),
+                                modifier = Modifier.size(42.dp)
+                            )
+
+                            Spacer(modifier = Modifier.width(12.dp))
+
+                            Column {
+
+                                Text(
+                                    text = "$streak DAY STREAK",
+                                    color = Color.White,
+                                    fontSize = 30.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+
+                                Spacer(modifier = Modifier.height(4.dp))
+
+                                Text(
+                                    text = "Consistency is Power ⚡",
+                                    color = Color.White.copy(alpha = 0.7f),
+                                    fontSize = 14.sp
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // SESSION SLIDER CARD
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color.White.copy(alpha = 0.08f)
+                    ),
+
+                    shape = RoundedCornerShape(24.dp)
+                ) {
+
+                    Column(
+                        modifier = Modifier.padding(22.dp)
+                    ) {
+
+                        val currentMinutes =
+                            zenViewModel.sliderPosition.floatValue.toInt()
+
+                        Text(
+                            text = "NEXT SESSION",
+                            color = Color.White.copy(alpha = 0.6f),
+                            fontSize = 12.sp,
+                            letterSpacing = 3.sp
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Text(
+                            text = "$currentMinutes Minutes",
+                            color = Color(0xFFBB86FC),
+                            fontSize = 28.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Slider(
+                            value = zenViewModel.sliderPosition.floatValue,
+
+                            onValueChange = {
+
+                                zenViewModel.sliderPosition.floatValue =
+                                    (it / 5).toInt() * 5f
+                            },
+
+                            valueRange = 5f..120f,
+
+                            steps = 0,
+
+                            colors = SliderDefaults.colors(
+                                thumbColor = Color(0xFFBB86FC),
+                                activeTrackColor = Color(0xFFBB86FC),
+                                inactiveTrackColor = Color.Gray
+                            )
+                        )
+
+                        Text(
+                            text = "5 min → 120 min",
+                            color = Color.White.copy(alpha = 0.5f),
+                            fontSize = 12.sp
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(28.dp))
+
+                Text(
+                    text = "TODAY'S SESSIONS",
+                    color = Color.White.copy(alpha = 0.7f),
+                    fontSize = 13.sp,
+                    letterSpacing = 3.sp
+                )
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                LazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(14.dp),
+                    contentPadding = PaddingValues(bottom = 120.dp)
+                ) {
+
+                    items(blocks) { block ->
+
+                        FocusCard(block)
+                    }
                 }
             }
         }
@@ -219,44 +335,116 @@ fun ZenStackApp(zenViewModel: ZenViewModel = viewModel()) {
 @Composable
 fun FocusCard(block: FocusBlock) {
 
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-
-        colors = CardDefaults.cardColors(
-            containerColor = Color(0xFF1E1E1E)
+    val cardColors = listOf(
+        Brush.horizontalGradient(
+            listOf(
+                Color(0xFF7F00FF),
+                Color(0xFFE100FF)
+            )
         ),
 
-        shape = RoundedCornerShape(16.dp)
+        Brush.horizontalGradient(
+            listOf(
+                Color(0xFF11998E),
+                Color(0xFF38EF7D)
+            )
+        ),
+
+        Brush.horizontalGradient(
+            listOf(
+                Color(0xFFFF512F),
+                Color(0xFFF09819)
+            )
+        )
+    )
+
+    val brush = remember {
+        cardColors.random()
+    }
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .shadow(
+                elevation = 12.dp,
+                shape = RoundedCornerShape(24.dp)
+            ),
+
+        colors = CardDefaults.cardColors(
+            containerColor = Color.Transparent
+        ),
+
+        shape = RoundedCornerShape(24.dp)
     ) {
 
-        Row(
-            modifier = Modifier.padding(20.dp),
-            verticalAlignment = Alignment.CenterVertically
+        Box(
+            modifier = Modifier
+                .background(brush)
+                .fillMaxWidth()
         ) {
 
-            Column(
-                modifier = Modifier.weight(1f)
+            Row(
+                modifier = Modifier.padding(18.dp),
+
+                verticalAlignment = Alignment.CenterVertically
             ) {
 
-                Text(
-                    text = "Block ${block.blockNumber}",
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold
+                NeonCircleIcon(
+                    icon = Icons.Default.LocalFireDepartment
                 )
 
+                Spacer(modifier = Modifier.width(18.dp))
+
+                Column(
+                    modifier = Modifier.weight(1f)
+                ) {
+
+                    Text(
+                        text = "Block ${block.blockNumber}",
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 20.sp
+                    )
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    Text(
+                        text = block.timeLabel,
+                        color = Color.White.copy(alpha = 0.85f),
+                        fontSize = 14.sp
+                    )
+                }
+
                 Text(
-                    text = block.timeLabel,
-                    color = Color.Gray,
-                    fontSize = 14.sp
+                    text = "DONE",
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 12.sp
                 )
             }
-
-            Text(
-                text = "COMPLETED",
-                color = Color(0xFF03DAC5),
-                fontSize = 10.sp,
-                fontWeight = FontWeight.Bold
-            )
         }
+    }
+}
+
+@Composable
+fun NeonCircleIcon(icon: ImageVector) {
+
+    Box(
+        modifier = Modifier
+            .size(54.dp)
+            .background(
+                Color.White.copy(alpha = 0.2f),
+                CircleShape
+            ),
+
+        contentAlignment = Alignment.Center
+    ) {
+
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = Color.White,
+            modifier = Modifier.size(28.dp)
+        )
     }
 }
