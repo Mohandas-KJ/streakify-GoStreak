@@ -50,6 +50,18 @@ class ZenViewModel(application: Application) : AndroidViewModel(application) {
         saveBlocks()
     }
 
+    fun clearAllBlocks() {
+
+        _blocks.clear()
+
+        _streak.value = 0
+
+        prefs.edit()
+            .remove("blocks")
+            .putInt("streak", 0)
+            .apply()
+    }
+
     private fun saveBlocks() {
 
         val jsonArray = JSONArray()

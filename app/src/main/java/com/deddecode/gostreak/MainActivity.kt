@@ -1,7 +1,7 @@
 package com.deddecode.gostreak
 
 import android.os.Bundle
-import androidx.activity.ComponentActivity
+import androidx.fragment.app.FragmentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -19,8 +19,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.biometric.BiometricPrompt
+import androidx.core.content.ContextCompat
+import androidx.compose.material.icons.filled.Delete
+import android.widget.Toast
 
-class MainActivity : ComponentActivity() {
+class MainActivity : FragmentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -43,23 +47,85 @@ fun ZenStackApp(zenViewModel: ZenViewModel = viewModel()) {
 
     val streak by zenViewModel.streak
 
+    val activity = androidx.compose.ui.platform.LocalContext.current as FragmentActivity
+
+    val executor = ContextCompat.getMainExecutor(activity)
+
+    val biometricPrompt = BiometricPrompt(
+        activity,
+        executor,
+
+        object : BiometricPrompt.AuthenticationCallback() {
+
+            override fun onAuthenticationSucceeded(
+                result: BiometricPrompt.AuthenticationResult
+            ) {
+
+                super.onAuthenticationSucceeded(result)
+
+                zenViewModel.clearAllBlocks()
+
+                Toast.makeText(
+                    activity,
+                    "All Blocks Cleared",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+        }
+    )
+
+    val promptInfo = BiometricPrompt.PromptInfo.Builder()
+        .setTitle("Fingerprint Required")
+        .setSubtitle("Authenticate to clear all streaks")
+        .setNegativeButtonText("Cancel")
+        .build()
+
     Scaffold(
         containerColor = Color.Transparent,
 
         floatingActionButton = {
 
-            FloatingActionButton(
-                onClick = {
-                    zenViewModel.addFocusBlock()
-                },
-                containerColor = Color(0xFFBB86FC)
+            Column(
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
 
-                Icon(
-                    Icons.Default.Add,
-                    contentDescription = "Add",
-                    tint = Color.Black
-                )
+                // CLEAR BUTTON
+                FloatingActionButton(
+
+                    onClick = {
+
+                        biometricPrompt.authenticate(promptInfo)
+
+                    },
+
+                    containerColor = Color(0xFFFF5252)
+
+                ) {
+
+                    Icon(
+                        Icons.Default.Delete,
+                        contentDescription = "Clear",
+                        tint = Color.White
+                    )
+                }
+
+                // ADD BUTTON
+                FloatingActionButton(
+
+                    onClick = {
+                        zenViewModel.addFocusBlock()
+                    },
+
+                    containerColor = Color(0xFFBB86FC)
+
+                ) {
+
+                    Icon(
+                        Icons.Default.Add,
+                        contentDescription = "Add",
+                        tint = Color.Black
+                    )
+                }
             }
         }
 
